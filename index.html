@@ -17,3 +17,192 @@ ai-tool/
 │   └── package.json
 │
 └── README.md
+fastapi
+uvicorn
+python-multipart
+pydantic
+openai
+opencv-python
+Pillow
+torch
+transformers
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
+from utils import process_image, process_video, process_text
+
+app = FastAPI()
+
+# Allow frontend requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/upload-image/")
+async def upload_image(file: UploadFile = File(...)):
+    result = await process_image(file)
+    return {"result": result}
+
+@app.post("/upload-video/")
+async def upload_video(file: UploadFile = File(...)):
+    result = await process_video(file)
+    return {"result": result}
+
+@app.post("/ask-question/")
+async def ask_question(question: str = Form(...)):
+    answer = await process_text(question)
+    return {"answer": answer}
+
+# Run server: uvicorn main:app --reload
+import openai
+from PIL import Image
+import io
+
+openai.api_key = "YOUR_OPENAI_API_KEY"
+
+async def process_image(file):
+    img = Image.open(io.BytesIO(await file.read()))
+    # Placeholder logic: return image size
+    return {"width": img.width, "height": img.height}
+
+async def process_video(file):
+    # Placeholder: just return filename
+    return {"filename": file.filename}
+
+async def process_text(question):
+    # Using OpenAI GPT
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": question}]
+    )
+    return response.choices[0].message.content
+import openai
+from PIL import Image
+import io
+
+openai.api_key = "YOUR_OPENAI_API_KEY"
+
+async def process_image(file):
+    img = Image.open(io.BytesIO(await file.read()))
+    # Placeholder logic: return image size
+    return {"width": img.width, "height": img.height}
+
+async def process_video(file):
+    # Placeholder: just return filename
+    return {"filename": file.filename}
+
+async def process_text(question):
+    # Using OpenAI GPT
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": question}]
+    )
+    return response.choices[0].message.content
+import React from "react";
+import ChatBox from "./components/ChatBox";
+import ImageUpload from "./components/ImageUpload";
+import VideoUpload from "./components/VideoUpload";
+
+function App() {
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>AI Tool</h1>
+      <ImageUpload />
+      <VideoUpload />
+      <ChatBox />
+    </div>
+  );
+}
+
+export default App;
+import React, { useState } from "react";
+
+function ImageUpload() {
+  const [result, setResult] = useState("");
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("http://localhost:8000/upload-image/", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    setResult(JSON.stringify(data.result));
+  };
+
+  return (
+    <div>
+      <h3>Upload Image</h3>
+      <input type="file" onChange={handleUpload} />
+      <p>Result: {result}</p>
+    </div>
+  );
+}
+
+export default ImageUpload;
+import React, { useState } from "react";
+
+function VideoUpload() {
+  const [result, setResult] = useState("");
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("http://localhost:8000/upload-video/", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    setResult(JSON.stringify(data.result));
+  };
+
+  return (
+    <div>
+      <h3>Upload Video</h3>
+      <input type="file" onChange={handleUpload} />
+      <p>Result: {result}</p>
+    </div>
+  );
+}
+
+export default VideoUpload;
+import React, { useState } from "react";
+
+function ChatBox() {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+
+  const handleAsk = async () => {
+    const formData = new FormData();
+    formData.append("question", question);
+
+    const res = await fetch("http://localhost:8000/ask-question/", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    setAnswer(data.answer);
+  };
+
+  return (
+    <div>
+      <h3>Ask Question</h3>
+      <input
+        type="text"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+      />
+      <button onClick={handleAsk}>Ask</button>
+      <p>Answer: {answer}</p>
+    </div>
+  );
+}
+
+export default ChatBox;
